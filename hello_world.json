@@ -1,0 +1,93 @@
+{
+  "components": {
+    "comp-hello-world-op": {
+      "executorLabel": "exec-hello-world-op",
+      "inputDefinitions": {
+        "parameters": {
+          "output_text": {
+            "parameterType": "STRING"
+          }
+        }
+      },
+      "outputDefinitions": {
+        "parameters": {
+          "Output": {
+            "parameterType": "STRING"
+          }
+        }
+      }
+    }
+  },
+  "defaultPipelineRoot": "gs://vertexaipipelinebucket/pipeline_root",
+  "deploymentSpec": {
+    "executors": {
+      "exec-hello-world-op": {
+        "container": {
+          "args": [
+            "--executor_input",
+            "{{$}}",
+            "--function_to_execute",
+            "hello_world_op"
+          ],
+          "command": [
+            "sh",
+            "-c",
+            "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&  python3 -m pip install --quiet --no-warn-script-location 'google-cloud-storage' && \"$0\" \"$@\"\n",
+            "sh",
+            "-ec",
+            "program_path=$(mktemp -d)\n\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\n_KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+            "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import *\n\ndef hello_world_op(output_text: str) -> str:\n    \"\"\"Prints a hello world message.\"\"\"\n    print(output_text)\n    return output_text\n\n"
+          ],
+          "image": "python:3.9",
+          "resources": {
+            "accelerator": {
+              "count": "1",
+              "type": "NVIDIA_TESLA_T4"
+            },
+            "cpuLimit": 0.5,
+            "memoryLimit": 0.536870912
+          }
+        }
+      }
+    }
+  },
+  "pipelineInfo": {
+    "description": "A simple pipeline that prints 'Hello World!'.",
+    "name": "hello-world-pipeline"
+  },
+  "root": {
+    "dag": {
+      "tasks": {
+        "hello-world-op": {
+          "cachingOptions": {
+            "enableCache": true
+          },
+          "componentRef": {
+            "name": "comp-hello-world-op"
+          },
+          "inputs": {
+            "parameters": {
+              "output_text": {
+                "componentInputParameter": "output_text"
+              }
+            }
+          },
+          "taskInfo": {
+            "name": "hello-world-op"
+          }
+        }
+      }
+    },
+    "inputDefinitions": {
+      "parameters": {
+        "output_text": {
+          "defaultValue": "Hello World!",
+          "isOptional": true,
+          "parameterType": "STRING"
+        }
+      }
+    }
+  },
+  "schemaVersion": "2.1.0",
+  "sdkVersion": "kfp-2.9.0"
+}

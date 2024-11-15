@@ -1,0 +1,5 @@
+{
+  "display_name": "my-first-pipeline",  
+  "template_path": "gs://vertexaipipelinebucket/name_pipeline.json",  
+  "pipeline_root": "gs://vertexaipipelinebucket/pipeline_root"  
+}

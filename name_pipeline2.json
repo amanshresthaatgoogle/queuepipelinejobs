@@ -1,0 +1,216 @@
+{
+  "components": {
+    "comp-concat-op": {
+      "executorLabel": "exec-concat-op",
+      "inputDefinitions": {
+        "parameters": {
+          "first_name": {
+            "parameterType": "STRING"
+          },
+          "last_name": {
+            "parameterType": "STRING"
+          }
+        }
+      },
+      "outputDefinitions": {
+        "parameters": {
+          "Output": {
+            "parameterType": "STRING"
+          }
+        }
+      }
+    },
+    "comp-first-name-op": {
+      "executorLabel": "exec-first-name-op",
+      "inputDefinitions": {
+        "parameters": {
+          "first_name": {
+            "parameterType": "STRING"
+          }
+        }
+      },
+      "outputDefinitions": {
+        "parameters": {
+          "Output": {
+            "parameterType": "STRING"
+          }
+        }
+      }
+    },
+    "comp-last-name-op": {
+      "executorLabel": "exec-last-name-op",
+      "inputDefinitions": {
+        "parameters": {
+          "last_name": {
+            "parameterType": "STRING"
+          }
+        }
+      },
+      "outputDefinitions": {
+        "parameters": {
+          "Output": {
+            "parameterType": "STRING"
+          }
+        }
+      }
+    }
+  },
+  "defaultPipelineRoot": "gs://vertexaipipeline/pipeline_root",
+  "deploymentSpec": {
+    "executors": {
+      "exec-concat-op": {
+        "container": {
+          "args": [
+            "--executor_input",
+            "{{$}}",
+            "--function_to_execute",
+            "concat_op"
+          ],
+          "command": [
+            "sh",
+            "-c",
+            "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\n",
+            "sh",
+            "-ec",
+            "program_path=$(mktemp -d)\n\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\n_KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+            "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import *\n\ndef concat_op(first_name: str, last_name: str) -> str:\n  \"\"\"Concatenates first and last names.\"\"\"\n  return f\"{first_name} {last_name}\"\n\n"
+          ],
+          "image": "python:3.9"
+        }
+      },
+      "exec-first-name-op": {
+        "container": {
+          "args": [
+            "--executor_input",
+            "{{$}}",
+            "--function_to_execute",
+            "first_name_op"
+          ],
+          "command": [
+            "sh",
+            "-c",
+            "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\n",
+            "sh",
+            "-ec",
+            "program_path=$(mktemp -d)\n\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\n_KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+            "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import *\n\ndef first_name_op(first_name: str) -> str:\n  \"\"\"Returns the first name.\"\"\"\n  return first_name\n\n"
+          ],
+          "image": "python:3.9"
+        }
+      },
+      "exec-last-name-op": {
+        "container": {
+          "args": [
+            "--executor_input",
+            "{{$}}",
+            "--function_to_execute",
+            "last_name_op"
+          ],
+          "command": [
+            "sh",
+            "-c",
+            "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip || python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location 'kfp==2.9.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"$0\" \"$@\"\n",
+            "sh",
+            "-ec",
+            "program_path=$(mktemp -d)\n\nprintf \"%s\" \"$0\" > \"$program_path/ephemeral_component.py\"\n_KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         \"$program_path/ephemeral_component.py\"                         \"$@\"\n",
+            "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import *\n\ndef last_name_op(last_name: str) -> str:\n  \"\"\"Returns the last name.\"\"\"\n  return last_name\n\n"
+          ],
+          "image": "python:3.9"
+        }
+      }
+    }
+  },
+  "pipelineInfo": {
+    "description": "A simple pipeline to concatenate first and last names.",
+    "name": "name-pipeline"
+  },
+  "root": {
+    "dag": {
+      "tasks": {
+        "concat-op": {
+          "cachingOptions": {
+            "enableCache": true
+          },
+          "componentRef": {
+            "name": "comp-concat-op"
+          },
+          "dependentTasks": [
+            "first-name-op",
+            "last-name-op"
+          ],
+          "inputs": {
+            "parameters": {
+              "first_name": {
+                "taskOutputParameter": {
+                  "outputParameterKey": "Output",
+                  "producerTask": "first-name-op"
+                }
+              },
+              "last_name": {
+                "taskOutputParameter": {
+                  "outputParameterKey": "Output",
+                  "producerTask": "last-name-op"
+                }
+              }
+            }
+          },
+          "taskInfo": {
+            "name": "concat-op"
+          }
+        },
+        "first-name-op": {
+          "cachingOptions": {
+            "enableCache": true
+          },
+          "componentRef": {
+            "name": "comp-first-name-op"
+          },
+          "inputs": {
+            "parameters": {
+              "first_name": {
+                "componentInputParameter": "first_name"
+              }
+            }
+          },
+          "taskInfo": {
+            "name": "first-name-op"
+          }
+        },
+        "last-name-op": {
+          "cachingOptions": {
+            "enableCache": true
+          },
+          "componentRef": {
+            "name": "comp-last-name-op"
+          },
+          "inputs": {
+            "parameters": {
+              "last_name": {
+                "componentInputParameter": "last_name"
+              }
+            }
+          },
+          "taskInfo": {
+            "name": "last-name-op"
+          }
+        }
+      }
+    },
+    "inputDefinitions": {
+      "parameters": {
+        "first_name": {
+          "defaultValue": "John",
+          "isOptional": true,
+          "parameterType": "STRING"
+        },
+        "last_name": {
+          "defaultValue": "Doe",
+          "isOptional": true,
+          "parameterType": "STRING"
+        }
+      }
+    }
+  },
+  "schemaVersion": "2.1.0",
+  "sdkVersion": "kfp-2.9.0"
+}
